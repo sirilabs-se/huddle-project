@@ -1,0 +1,930 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Events Platform — Mockup System</title>
+<style>
+:root{
+  --bg:#f2f2f0; --surface:#ffffff; --surface-2:#fafaf9;
+  --text:#18181b; --text-muted:#71717a; --text-faint:#a1a1aa;
+  --border:#e4e4e7; --border-strong:#d4d4d8;
+  --radius-sm:8px; --radius-md:14px; --radius-lg:20px; --radius-full:999px;
+  --shadow-sm:0 1px 2px rgba(0,0,0,.06);
+  --shadow-md:0 4px 16px rgba(0,0,0,.08);
+  --shadow-lg:0 12px 32px rgba(0,0,0,.12);
+  --g1:#3f3f46; --g2:#a1a1aa; --g3:#d4d4d8;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);}
+body{display:flex;height:100vh;overflow:hidden;font-size:14px;}
+
+/* ===== TOOL CHROME (not part of the app itself) ===== */
+#sidebar{width:240px;flex-shrink:0;background:#1c1c1f;color:#e4e4e7;overflow-y:auto;padding:20px 0;}
+#sidebar .brand{padding:0 20px 18px;font-weight:700;font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:#a1a1aa;border-bottom:1px solid #303033;margin-bottom:8px;}
+.nav-group-label{padding:16px 20px 6px;font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:#71717a;font-weight:600;}
+.nav-item{padding:9px 20px;cursor:pointer;font-size:13.5px;color:#d4d4d8;border-left:3px solid transparent;transition:.15s;}
+.nav-item:hover{background:#28282c;color:#fff;}
+.nav-item.active{background:#28282c;color:#fff;border-left-color:#8b8bf0;font-weight:600;}
+
+#toolbar{height:52px;flex-shrink:0;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 20px;}
+#toolbar .page-title{font-weight:700;font-size:15px;}
+#toolbar .controls{display:flex;gap:8px;align-items:center;}
+.seg{display:flex;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:2px;gap:2px;}
+.seg button{border:none;background:transparent;padding:5px 12px;font-size:12.5px;border-radius:6px;cursor:pointer;color:var(--text-muted);font-weight:600;font-family:inherit;}
+.seg button.active{background:var(--text);color:#fff;}
+.state-chip{border:1px solid var(--border-strong);background:var(--surface);padding:5px 12px;font-size:12.5px;border-radius:var(--radius-full);cursor:pointer;color:var(--text-muted);font-weight:600;font-family:inherit;}
+.state-chip.active{background:var(--text);color:#fff;border-color:var(--text);}
+.annot{font-size:11px;color:var(--text-faint);font-style:italic;}
+
+#stage{flex:1;overflow:auto;background:#e8e8e6;padding:32px;display:flex;flex-direction:column;}
+#frame-wrap{margin:0 auto;transition:width .25s ease;width:1280px;}
+#frame{background:var(--surface-2);border-radius:16px;overflow:hidden;box-shadow:var(--shadow-lg);border:1px solid var(--border);min-height:600px;}
+#frame-wrap.mobile{width:390px;}
+
+/* ===== APP DESIGN SYSTEM ===== */
+.app-shell{background:var(--surface-2);min-height:100%;}
+.topnav{height:64px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 28px;position:sticky;top:0;z-index:10;}
+.mark{width:30px;height:30px;border-radius:9px;background:linear-gradient(135deg,var(--g1),var(--g3));flex-shrink:0;}
+.topnav-links{display:flex;gap:26px;font-weight:600;font-size:13.5px;color:var(--text-muted);}
+.topnav-links span.on{color:var(--text);}
+.topnav-right{display:flex;align-items:center;gap:14px;}
+.hide-mobile{display:flex;}
+#frame-wrap.mobile .hide-mobile{display:none;}
+#frame-wrap.mobile .topnav{padding:0 16px;}
+.burger{display:none;width:34px;height:34px;border-radius:8px;border:1px solid var(--border);align-items:center;justify-content:center;font-size:16px;cursor:pointer;}
+#frame-wrap.mobile .burger{display:flex;}
+
+/* language switcher */
+.lang-switch{position:relative;}
+.lang-btn{display:flex;align-items:center;gap:5px;border:1px solid var(--border-strong);background:var(--surface);padding:7px 11px;border-radius:var(--radius-full);font-size:12.5px;font-weight:700;cursor:pointer;color:var(--text);font-family:inherit;}
+.lang-btn:hover{border-color:var(--text);}
+.lang-btn .caret{font-size:9px;color:var(--text-faint);transition:.15s;}
+.lang-switch.open .lang-btn .caret{transform:rotate(180deg);}
+.lang-dropdown{display:none;position:absolute;top:calc(100% + 8px);right:0;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-md);box-shadow:var(--shadow-lg);min-width:170px;padding:6px;z-index:40;}
+.lang-switch.open .lang-dropdown{display:block;}
+.lang-option{display:flex;align-items:center;justify-content:space-between;padding:9px 10px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;color:var(--text);}
+.lang-option:hover{background:var(--surface-2);}
+.lang-option .code{color:var(--text-faint);font-weight:700;font-size:11px;}
+.lang-option .check{color:var(--text);font-weight:700;visibility:hidden;}
+.lang-option.selected .check{visibility:visible;}
+.lang-dropdown .lang-note{padding:8px 10px 4px;font-size:10.5px;color:var(--text-faint);border-top:1px solid var(--border);margin-top:4px;}
+
+/* mobile menu panel */
+.mobile-menu{display:none;position:absolute;top:64px;left:0;right:0;background:var(--surface);border-bottom:1px solid var(--border);box-shadow:var(--shadow-md);z-index:30;padding:8px 16px 18px;}
+#frame-wrap:not(.mobile) .mobile-menu{display:none !important;}
+.mobile-menu.open{display:block;}
+.mobile-menu .m-link{padding:12px 4px;font-weight:700;font-size:14px;border-bottom:1px solid var(--border);}
+.mobile-menu .m-actions{display:flex;flex-direction:column;gap:10px;margin-top:14px;}
+.mobile-menu .m-lang-row{display:flex;align-items:center;justify-content:space-between;padding:12px 4px;border-bottom:1px solid var(--border);}
+
+
+.avatar{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--g2),var(--g1));color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;flex-shrink:0;}
+.avatar.sm{width:26px;height:26px;font-size:10px;}
+.avatar.lg{width:84px;height:84px;font-size:26px;}
+
+.btn{font-family:inherit;font-weight:700;font-size:13.5px;padding:10px 18px;border-radius:var(--radius-sm);border:none;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:.15s;}
+.btn-primary{background:var(--text);color:#fff;}
+.btn-primary:hover{background:#000;box-shadow:var(--shadow-sm);}
+.btn-primary:disabled{background:var(--g3);color:#fff;cursor:not-allowed;}
+.btn-secondary{background:var(--surface);color:var(--text);border:1.5px solid var(--border-strong);}
+.btn-secondary:hover{border-color:var(--text);}
+.btn-ghost{background:transparent;color:var(--text-muted);}
+.btn-ghost:hover{background:var(--surface-2);color:var(--text);}
+.btn-destructive{background:var(--surface);color:#3f3f46;border:1.5px solid var(--border-strong);}
+.btn-destructive:hover{border-color:#3f3f46;background:#f4f4f5;}
+.btn-sm{padding:6px 12px;font-size:12px;}
+.btn-block{width:100%;justify-content:center;}
+
+.badge{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:var(--radius-full);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;}
+.badge::before{content:'';width:6px;height:6px;border-radius:50%;background:currentColor;}
+.badge-live{background:#e4e4e7;color:#18181b;}
+.badge-confirmed{background:#ecfdf3;color:#16803c;}
+.badge-pending{background:#fef6e6;color:#a15c00;}
+.badge-waitlisted{background:#eef2ff;color:#4338ca;}
+.badge-draft{background:#f4f4f5;color:#71717a;}
+.badge-completed{background:#f4f4f5;color:#52525b;}
+.badge-cancelled{background:#fef2f2;color:#b91c1c;}
+
+.chip{display:inline-flex;align-items:center;padding:7px 14px;border-radius:var(--radius-full);font-size:12.5px;font-weight:600;border:1.5px solid var(--border-strong);background:var(--surface);color:var(--text-muted);cursor:pointer;}
+.chip.active{background:var(--text);color:#fff;border-color:var(--text);}
+
+.field{margin-bottom:18px;}
+.field label{display:block;font-size:12.5px;font-weight:700;margin-bottom:6px;color:var(--text);}
+.field .hint{font-size:11.5px;color:var(--text-muted);margin-top:5px;}
+.field .err{font-size:11.5px;color:#dc2626;margin-top:5px;font-weight:600;}
+input[type=text],input[type=email],input[type=password],input[type=number],textarea,select{
+  width:100%;padding:11px 13px;border:1.5px solid var(--border-strong);border-radius:var(--radius-sm);font-size:14px;font-family:inherit;background:var(--surface);color:var(--text);
+}
+input:focus,textarea:focus,select:focus{outline:none;border-color:#4b4b52;box-shadow:0 0 0 3px rgba(0,0,0,.08);}
+input.error{border-color:#dc2626;box-shadow:0 0 0 3px rgba(220,38,38,.08);}
+textarea{resize:vertical;min-height:90px;}
+.toggle{width:42px;height:24px;border-radius:99px;background:var(--g3);position:relative;cursor:pointer;flex-shrink:0;}
+.toggle.on{background:var(--text);}
+.toggle::after{content:'';position:absolute;width:18px;height:18px;border-radius:50%;background:#fff;top:3px;left:3px;transition:.15s;box-shadow:var(--shadow-sm);}
+.toggle.on::after{left:21px;}
+
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);}
+.event-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;cursor:pointer;transition:.18s;}
+.event-card:hover{box-shadow:var(--shadow-md);transform:translateY(-2px);border-color:var(--border-strong);}
+.cover{height:130px;position:relative;}
+.cover .cat{position:absolute;top:12px;left:12px;background:rgba(255,255,255,.92);backdrop-filter:blur(4px);padding:4px 10px;border-radius:var(--radius-full);font-size:11px;font-weight:700;}
+.ecard-body{padding:16px;}
+.ecard-title{font-weight:700;font-size:15px;margin:0 0 6px;}
+.ecard-meta{font-size:12.5px;color:var(--text-muted);display:flex;flex-direction:column;gap:4px;margin-bottom:12px;}
+.capacity-row{display:flex;align-items:center;gap:8px;}
+.capacity-bar{flex:1;height:6px;background:var(--border);border-radius:99px;overflow:hidden;}
+.capacity-bar>div{height:100%;background:var(--g1);}
+.capacity-txt{font-size:11px;font-weight:700;color:var(--text-muted);}
+
+.section-pad{padding:32px 40px;}
+#frame-wrap.mobile .section-pad{padding:20px 16px;}
+.grid-events{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;}
+#frame-wrap.mobile .grid-events{grid-template-columns:1fr;}
+
+.skeleton{background:linear-gradient(90deg,#e4e4e7 25%,#eeeeef 37%,#e4e4e7 63%);background-size:400% 100%;animation:shimmer 1.4s infinite;border-radius:8px;}
+@keyframes shimmer{0%{background-position:100% 0}100%{background-position:0 0}}
+
+.empty-state{text-align:center;padding:70px 20px;}
+.empty-state .ico{width:56px;height:56px;border-radius:16px;background:var(--surface);border:1.5px dashed var(--border-strong);margin:0 auto 18px;display:flex;align-items:center;justify-content:center;font-size:22px;color:var(--text-faint);}
+.empty-state h3{margin:0 0 6px;font-size:16px;}
+.empty-state p{margin:0 0 20px;color:var(--text-muted);font-size:13.5px;}
+
+.auth-wrap{display:flex;align-items:center;justify-content:center;min-height:640px;padding:40px 20px;}
+.auth-card{width:380px;max-width:100%;}
+.auth-card h1{font-size:24px;margin:0 0 6px;}
+.auth-card .sub{color:var(--text-muted);font-size:13.5px;margin-bottom:26px;}
+
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px;}
+.stat-card .num{font-size:28px;font-weight:800;margin-bottom:4px;}
+.stat-card .lbl{font-size:12.5px;color:var(--text-muted);font-weight:600;}
+
+.tabs{display:flex;gap:6px;border-bottom:1.5px solid var(--border);margin-bottom:24px;}
+.tab{padding:10px 4px;margin-right:22px;font-weight:700;font-size:13.5px;color:var(--text-muted);cursor:pointer;border-bottom:2.5px solid transparent;}
+.tab.active{color:var(--text);border-color:var(--text);}
+
+.table{width:100%;border-collapse:collapse;}
+.table th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--text-muted);padding:10px 14px;border-bottom:1.5px solid var(--border);font-weight:700;}
+.table td{padding:14px;border-bottom:1px solid var(--border);font-size:13.5px;vertical-align:middle;}
+.table tr:hover td{background:var(--surface-2);}
+.row-flex{display:flex;align-items:center;gap:10px;}
+
+.star{font-size:22px;color:var(--g3);cursor:pointer;}
+.star.filled{color:var(--g1);}
+
+h2.pg-title{font-size:22px;font-weight:800;margin:0 0 4px;}
+.pg-sub{color:var(--text-muted);font-size:13.5px;margin-bottom:24px;}
+
+.toast{position:fixed;bottom:24px;right:24px;background:#18181b;color:#fff;padding:13px 18px;border-radius:var(--radius-sm);font-size:13px;font-weight:600;box-shadow:var(--shadow-lg);display:flex;align-items:center;gap:10px;z-index:50;}
+
+.map-ph{height:150px;border-radius:var(--radius-md);background:repeating-linear-gradient(45deg,#e4e4e7,#e4e4e7 8px,#ececed 8px,#ececed 16px);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--text-faint);font-size:12px;font-weight:600;}
+
+/* horizontal-scroll rows (Meetup-inspired) */
+.rail-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:14px;}
+.rail-head h3{font-size:17px;margin:0;font-weight:800;}
+.rail-head .see-all{font-size:12.5px;font-weight:700;color:var(--text-muted);cursor:pointer;white-space:nowrap;}
+.rail{display:flex;gap:16px;overflow-x:auto;padding-bottom:6px;scroll-snap-type:x proximity;}
+.rail::-webkit-scrollbar{height:0;}
+.rail-card{flex:0 0 220px;scroll-snap-align:start;}
+#frame-wrap.mobile .rail-card{flex-basis:180px;}
+.rail-card .cover{height:100px;}
+.rail-card .ecard-body{padding:12px;}
+.rail-card .ecard-title{font-size:13.5px;-webkit-line-clamp:2;display:-webkit-box;-webkit-box-orient:vertical;overflow:hidden;}
+.rail-card .ecard-meta{font-size:11.5px;margin-bottom:0;}
+.intent-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;}
+#frame-wrap.mobile .intent-grid{grid-template-columns:repeat(2,1fr);}
+.intent-tile{border:1.5px solid var(--border);border-radius:var(--radius-md);padding:18px 16px;cursor:pointer;background:var(--surface);transition:.15s;}
+.intent-tile:hover{border-color:var(--border-strong);box-shadow:var(--shadow-sm);}
+.intent-tile .ico{width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,var(--g2),var(--g1));margin-bottom:12px;}
+.intent-tile b{font-size:13px;}
+.group-row{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border);}
+.group-row:last-child{border-bottom:none;}
+.group-thumb{width:44px;height:44px;border-radius:10px;flex-shrink:0;}
+.group-row .meta{font-size:11.5px;color:var(--text-muted);}
+.section-divider{height:1px;background:var(--border);margin:36px 0;}
+
+::-webkit-scrollbar{width:10px;height:10px;}
+::-webkit-scrollbar-thumb{background:#3f3f46;border-radius:99px;}
+</style>
+</head>
+<body>
+
+<div id="sidebar">
+  <div class="brand">◆ Design System</div>
+  <div class="nav-group-label">Foundations</div>
+  <div class="nav-item" data-p="system">Components &amp; Tokens</div>
+  <div class="nav-group-label">Auth</div>
+  <div class="nav-item" data-p="signup">1. Sign Up</div>
+  <div class="nav-item" data-p="login">2. Log In</div>
+  <div class="nav-item" data-p="forgot">3. Forgot Password</div>
+  <div class="nav-group-label">Discovery</div>
+  <div class="nav-item" data-p="browse">4. Browse / Discover</div>
+  <div class="nav-item" data-p="detail">5. Event Detail</div>
+  <div class="nav-group-label">Organizing</div>
+  <div class="nav-item" data-p="create">6. Create / Edit Event</div>
+  <div class="nav-item" data-p="dashboard">8. Organizer Dashboard</div>
+  <div class="nav-item" data-p="participants">9. Participants Mgmt</div>
+  <div class="nav-group-label">Participating</div>
+  <div class="nav-item" data-p="enrollments">7. My Enrollments</div>
+  <div class="nav-item" data-p="review">11. Post-Event Review</div>
+  <div class="nav-group-label">Identity &amp; Errors</div>
+  <div class="nav-item" data-p="profile">10. User Profile</div>
+  <div class="nav-item" data-p="notfound">12. 404 Not Found</div>
+  <div class="nav-group-label">Added — Pre-Launch</div>
+  <div class="nav-item" data-p="settings">13. Account Settings</div>
+  <div class="nav-item" data-p="legal">14. Legal Page Template</div>
+</div>
+
+<div style="flex:1;display:flex;flex-direction:column;min-width:0;">
+  <div id="toolbar">
+    <div class="page-title" id="pageTitle">Components &amp; Tokens</div>
+    <div class="controls">
+      <div class="seg" id="stateSeg" style="display:none;"></div>
+      <div class="seg">
+        <button id="btnDesktop" class="active">🖥 Desktop</button>
+        <button id="btnMobile">📱 Mobile</button>
+      </div>
+    </div>
+  </div>
+  <div id="stage">
+    <div id="frame-wrap"><div id="frame"></div></div>
+    <div class="annot" style="text-align:center;margin-top:14px;" id="annotLine"></div>
+  </div>
+</div>
+
+<script>
+const frame = document.getElementById('frame');
+const frameWrap = document.getElementById('frame-wrap');
+const pageTitle = document.getElementById('pageTitle');
+const stateSeg = document.getElementById('stateSeg');
+const annotLine = document.getElementById('annotLine');
+
+function grad(seed){
+  const grads=[
+    'linear-gradient(135deg,#52525b,#d4d4d8)',
+    'linear-gradient(135deg,#3f3f46,#a1a1aa)',
+    'linear-gradient(120deg,#71717a,#e4e4e7)',
+    'linear-gradient(150deg,#27272a,#a1a1aa)',
+    'linear-gradient(135deg,#a1a1aa,#3f3f46)',
+  ];
+  return grads[seed % grads.length];
+}
+
+function langDropdown(){
+  return `<div class="lang-dropdown">
+    <div class="lang-option selected" onclick="selectLang(event,'EN')"><span>English</span><span class="code">EN <span class="check">✓</span></span></div>
+    <div class="lang-option" onclick="selectLang(event,'ES')"><span>Español</span><span class="code">ES <span class="check">✓</span></span></div>
+    <div class="lang-option" onclick="selectLang(event,'FR')"><span>Français</span><span class="code">FR <span class="check">✓</span></span></div>
+    <div class="lang-note">More languages coming soon</div>
+  </div>`;
+}
+
+function langSwitcher(id){
+  return `<div class="lang-switch" id="${id}">
+    <button class="lang-btn" type="button" onclick="toggleLangMenu(event,'${id}')">🌐 <span class="lang-code">EN</span> <span class="caret">▾</span></button>
+    ${langDropdown()}
+  </div>`;
+}
+
+const topnav = (loggedIn=true) => `
+<div class="topnav">
+  <div style="display:flex;align-items:center;gap:28px;">
+    <div style="display:flex;align-items:center;gap:10px;"><div class="mark"></div></div>
+    <div class="topnav-links hide-mobile">
+      <span class="on">Browse</span><span>My Enrollments</span>${loggedIn?'<span>Dashboard</span>':''}
+    </div>
+  </div>
+  <div class="topnav-right">
+    <div class="hide-mobile">${langSwitcher('langDesktop')}</div>
+    ${loggedIn ? `
+      <button class="btn btn-primary btn-sm hide-mobile">+ New Event</button>
+      <div class="avatar sm hide-mobile">JT</div>
+    ` : `
+      <div class="hide-mobile" style="display:flex;gap:10px;">
+        <button class="btn btn-ghost btn-sm">Log In</button>
+        <button class="btn btn-primary btn-sm">Sign Up</button>
+      </div>
+    `}
+    <div class="burger" onclick="toggleMobileMenu(event)">☰</div>
+  </div>
+  <div class="mobile-menu" id="mobileMenu">
+    <div class="m-link">Browse</div>
+    <div class="m-link">My Enrollments</div>
+    ${loggedIn?'<div class="m-link">Dashboard</div>':''}
+    <div class="m-lang-row">
+      <span style="font-weight:700;font-size:13px;color:var(--text-muted);">Language</span>
+      ${langSwitcher('langMobile')}
+    </div>
+    <div class="m-actions">
+      ${loggedIn ? `
+        <div class="row-flex"><div class="avatar sm">JT</div><b style="font-size:13px;">Jamie Torres</b></div>
+        <button class="btn btn-primary btn-block">+ New Event</button>
+      ` : `
+        <button class="btn btn-secondary btn-block">Log In</button>
+        <button class="btn btn-primary btn-block">Sign Up</button>
+      `}
+    </div>
+  </div>
+</div>`;
+
+function eventCard(i,opts={}){
+  const cats=['Music','Sports','Books','Tech','Outdoors','Food'];
+  const cat=cats[i%cats.length];
+  const filled = opts.filled ?? [14,20];
+  const pct = Math.round(filled[0]/filled[1]*100);
+  return `
+  <div class="event-card">
+    <div class="cover" style="background:${grad(i)}"><div class="cat">${cat}</div></div>
+    <div class="ecard-body">
+      <div class="ecard-title">${opts.title || 'Untitled Event '+(i+1)}</div>
+      <div class="ecard-meta">
+        <span>📅 Sat, Aug ${14+i} · 9:00 AM</span>
+        <span>📍 ${opts.loc || 'Riverside Park'}</span>
+      </div>
+      <div class="capacity-row">
+        <div class="capacity-bar"><div style="width:${pct}%"></div></div>
+        <span class="capacity-txt">${filled[0]}/${filled[1]}</span>
+      </div>
+    </div>
+  </div>`;
+}
+
+function skeletonCard(){
+  return `<div class="card" style="overflow:hidden;">
+    <div class="skeleton" style="height:130px;border-radius:0;"></div>
+    <div style="padding:16px;">
+      <div class="skeleton" style="height:16px;width:70%;margin-bottom:10px;"></div>
+      <div class="skeleton" style="height:11px;width:50%;margin-bottom:6px;"></div>
+      <div class="skeleton" style="height:11px;width:40%;margin-bottom:14px;"></div>
+      <div class="skeleton" style="height:6px;width:100%;"></div>
+    </div>
+  </div>`;
+}
+
+function emptyState(icon,title,msg,cta){
+  return `<div class="empty-state">
+    <div class="ico">${icon}</div>
+    <h3>${title}</h3>
+    <p>${msg}</p>
+    ${cta?`<button class="btn btn-primary">${cta}</button>`:''}
+  </div>`;
+}
+
+/* ================= PAGES ================= */
+const pages = {};
+
+pages.system = {
+  title:'Components & Tokens', states:null,
+  render:()=>`<div class="app-shell"><div class="section-pad">
+    <h2 class="pg-title">Shared Component System</h2>
+    <p class="pg-sub">Designed once, reused across every screen. Rounded, grayscale-neutral, color to be applied later.</p>
+
+    <h3>Buttons</h3>
+    <div style="display:flex;gap:12px;margin-bottom:8px;flex-wrap:wrap;">
+      <button class="btn btn-primary">Primary</button>
+      <button class="btn btn-secondary">Secondary</button>
+      <button class="btn btn-ghost">Ghost</button>
+      <button class="btn btn-destructive">Destructive</button>
+      <button class="btn btn-primary" disabled>Disabled</button>
+    </div>
+    <p class="annot">Hover: primary darkens to near-black + shadow · Secondary: border darkens · Focus: 3px outer ring</p>
+
+    <h3 style="margin-top:28px;">Navigation &amp; Language Switcher</h3>
+    <p class="annot" style="margin-bottom:12px;">Globe icon + current language code, opens a dropdown. Visual affordance only — no translated content or locale logic wired up yet. Lives in the desktop top nav (both auth states) and inside the mobile burger menu.</p>
+    <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start;">
+      <div>
+        <div class="hint" style="margin-bottom:8px;">Closed</div>
+        <div class="lang-switch" id="langDemoClosed" style="position:relative;">
+          <button class="lang-btn" type="button" onclick="toggleLangMenu(event,'langDemoClosed')">🌐 <span class="lang-code">EN</span> <span class="caret">▾</span></button>
+          ${langDropdown()}
+        </div>
+      </div>
+      <div>
+        <div class="hint" style="margin-bottom:8px;">Open (dropdown state)</div>
+        <div class="lang-switch open" style="position:relative;">
+          <button class="lang-btn" type="button">🌐 <span class="lang-code">EN</span> <span class="caret">▾</span></button>
+          ${langDropdown()}
+        </div>
+      </div>
+    </div>
+
+    <h3 style="margin-top:28px;">Status Badges</h3>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+      <span class="badge badge-live">Live</span>
+      <span class="badge badge-draft">Draft</span>
+      <span class="badge badge-confirmed">Confirmed</span>
+      <span class="badge badge-pending">Pending</span>
+      <span class="badge badge-waitlisted">Waitlisted</span>
+      <span class="badge badge-completed">Completed</span>
+      <span class="badge badge-cancelled">Cancelled</span>
+    </div>
+
+    <h3 style="margin-top:28px;">Tags / Filter Chips</h3>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+      <span class="chip active">All</span><span class="chip">Music</span><span class="chip">Sports</span><span class="chip">Books</span><span class="chip">Tech</span>
+    </div>
+
+    <h3 style="margin-top:28px;">Form Inputs</h3>
+    <div style="max-width:420px;">
+      <div class="field"><label>Text field</label><input type="text" placeholder="Placeholder"></div>
+      <div class="field"><label>Focused</label><input type="text" style="border-color:#4b4b52;box-shadow:0 0 0 3px rgba(0,0,0,.08)" value="Editing…"></div>
+      <div class="field"><label>Error state</label><input type="text" class="error" value="taken@email.com"><div class="err">This email is already in use.</div></div>
+      <div class="field"><label>Select</label><select><option>Choose a category</option></select></div>
+      <div class="field"><label>Toggle</label><div class="toggle on"></div></div>
+    </div>
+
+    <h3 style="margin-top:28px;">Cards</h3>
+    <div style="display:flex;gap:20px;flex-wrap:wrap;">
+      <div style="width:260px;">${eventCard(0)}</div>
+      <div class="stat-card" style="width:180px;"><div class="num">128</div><div class="lbl">Total Enrollments</div></div>
+    </div>
+
+    <h3 style="margin-top:28px;">Empty / Loading / Toast</h3>
+    <div style="display:flex;gap:20px;flex-wrap:wrap;align-items:flex-start;">
+      <div style="width:280px;" class="card">${emptyState('◌','No results','Try adjusting your filters.', 'Clear filters')}</div>
+      <div style="width:220px;">${skeletonCard()}</div>
+      <div class="toast" style="position:static;">✓ Event published</div>
+    </div>
+  </div></div>`
+};
+
+pages.signup = {
+  title:'Sign Up', states:['populated','error','loading'],
+  render:(s)=>`<div class="app-shell">${topnav(false)}<div class="auth-wrap"><div class="auth-card">
+    <h1>Create your account</h1>
+    <div class="sub">Find your people. Join what moves you.</div>
+    <div class="field"><label>Full name</label><input type="text" placeholder="Jamie Rivera"></div>
+    <div class="field"><label>Email</label><input type="email" class="${s==='error'?'error':''}" value="${s==='error'?'jamie@email.com':''}" placeholder="you@email.com">
+      ${s==='error'?'<div class="err">An account with this email already exists.</div>':''}
+    </div>
+    <div class="field"><label>Password</label><input type="password" placeholder="8+ characters">
+      <div class="hint">${s==='populated'?'Weak — add a number and symbol':'Use 8+ characters with a number and symbol'}</div>
+    </div>
+    <button class="btn btn-primary btn-block" ${s==='loading'?'disabled':''}>${s==='loading'?'Creating account…':'Create account'}</button>
+    <p style="text-align:center;font-size:13px;color:var(--text-muted);margin-top:16px;">Already have an account? <b style="color:var(--text)">Log in</b></p>
+  </div></div></div>`
+};
+
+pages.login = {
+  title:'Log In', states:['populated','error'],
+  render:(s)=>`<div class="app-shell">${topnav(false)}<div class="auth-wrap"><div class="auth-card">
+    <h1>Welcome back</h1>
+    <div class="sub">Log in to see what's happening.</div>
+    <div class="field"><label>Email</label><input type="email" value="${s==='error'?'jamie@email.com':''}" placeholder="you@email.com"></div>
+    <div class="field"><label>Password</label><input type="password" class="${s==='error'?'error':''}" placeholder="••••••••">
+      ${s==='error'?'<div class="err">Incorrect email or password. Try again.</div>':''}
+    </div>
+    <p style="text-align:right;font-size:12.5px;font-weight:600;margin:-8px 0 18px;">Forgot password?</p>
+    <button class="btn btn-primary btn-block">Log in</button>
+    <p style="text-align:center;font-size:13px;color:var(--text-muted);margin-top:16px;">New here? <b style="color:var(--text)">Sign up</b></p>
+  </div></div></div>`
+};
+
+pages.forgot = {
+  title:'Forgot Password', states:['populated','confirmation','reset','reset-success'],
+  render:(s)=>`<div class="app-shell">${topnav(false)}<div class="auth-wrap"><div class="auth-card">
+    ${s==='confirmation' ? `
+      <div style="text-align:center;">
+        <div class="empty-state"><div class="ico">✉</div>
+        <h3>Check your email</h3>
+        <p>We sent a reset link to jamie@email.com. It expires in 1 hour.</p>
+        <button class="btn btn-secondary">Resend email</button></div>
+      </div>` : ''}
+    ${s==='reset' ? `
+      <h1>Set a new password</h1>
+      <div class="sub">You followed a valid reset link for jamie@email.com.</div>
+      <div class="field"><label>New password</label><input type="password" placeholder="8+ characters">
+        <div class="hint">Use 8+ characters with a number and symbol</div>
+      </div>
+      <div class="field"><label>Confirm new password</label><input type="password" placeholder="Re-enter password"></div>
+      <button class="btn btn-primary btn-block">Update password</button>
+    ` : ''}
+    ${s==='reset-success' ? `
+      <div style="text-align:center;">
+        <div class="empty-state"><div class="ico">✓</div>
+        <h3>Password updated — you're all set</h3>
+        <p>You can now log in with your new password.</p>
+        <button class="btn btn-primary">Back to Log In</button></div>
+      </div>` : ''}
+    ${(s!=='confirmation' && s!=='reset' && s!=='reset-success') ? `
+      <h1>Reset your password</h1>
+      <div class="sub">Enter your email and we'll send a reset link.</div>
+      <div class="field"><label>Email</label><input type="email" placeholder="you@email.com"></div>
+      <button class="btn btn-primary btn-block">Send reset link</button>
+    ` : ''}
+  </div></div></div>`
+};
+
+function rail(title,items,seeAll=true){
+  return `<div style="margin-bottom:36px;">
+    <div class="rail-head"><h3>${title}</h3>${seeAll?'<span class="see-all">See all →</span>':''}</div>
+    <div class="rail">${items.map(i=>`<div class="rail-card">${eventCard(i,{})}</div>`).join('')}</div>
+  </div>`;
+}
+
+pages.browse = {
+  title:'Browse / Discover Events', states:['populated','empty','loading'],
+  render:(s)=>`<div class="app-shell">${topnav(true)}
+    <div style="padding:40px 40px 32px;border-bottom:1px solid var(--border);">
+      <div style="font-size:12.5px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px;">Events in</div>
+      <h1 style="font-size:32px;margin:0 0 14px;font-weight:800;">Riverbend</h1>
+      <p style="color:var(--text-muted);margin:0 0 22px;max-width:480px;">Find events to connect with people who share your interests — whatever you're into, there's a group for it.</p>
+      <div style="max-width:520px;display:flex;gap:8px;">
+        <input type="text" placeholder="Search events, skills, interests…" style="flex:1;">
+        <button class="btn btn-primary">Search</button>
+      </div>
+    </div>
+
+    <div class="section-pad">
+      ${s==='loading' ? `
+        <div class="rail-head"><h3>Most popular in Riverbend</h3></div>
+        <div class="rail">${Array(4).fill(0).map(()=>`<div class="rail-card">${skeletonCard()}</div>`).join('')}</div>
+      ` : ''}
+
+      ${s!=='loading' ? rail('Most popular in Riverbend',[0,1,2,3,4]) : ''}
+
+      ${s!=='loading' ? `
+      <div style="margin-bottom:36px;">
+        <div class="rail-head"><h3>What brings you here today?</h3></div>
+        <div class="intent-grid">
+          <div class="intent-tile"><div class="ico"></div><b>Meet new people</b></div>
+          <div class="intent-tile"><div class="ico"></div><b>Skill &amp; hobby groups</b></div>
+          <div class="intent-tile"><div class="ico"></div><b>Sports &amp; fitness</b></div>
+          <div class="intent-tile"><div class="ico"></div><b>Outdoor activities</b></div>
+        </div>
+      </div>` : ''}
+
+      ${s!=='loading' ? rail('Happening today',[1,3,5]) : ''}
+      ${s!=='loading' ? rail('This weekend',[2,0,4,1]) : ''}
+
+      <div class="section-divider"></div>
+
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;flex-wrap:wrap;gap:12px;">
+        <h3 style="margin:0;font-size:17px;font-weight:800;">Browse all events</h3>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+          <select style="width:auto;"><option>Sort: Date</option><option>Popularity</option><option>Distance</option></select>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px;">
+        <span class="chip active">All</span><span class="chip">Music</span><span class="chip">Sports</span><span class="chip">Books</span><span class="chip">Tech</span><span class="chip">Outdoors</span>
+      </div>
+
+      ${s==='loading' ? `<div class="grid-events">${Array(6).fill(0).map(skeletonCard).join('')}</div>` : ''}
+      ${s==='empty' ? emptyState('◌','No events match your filters','Try a different category or broaden your search.','Clear filters') : ''}
+      ${s==='populated' ? `<div class="grid-events">${Array(6).fill(0).map((_,i)=>eventCard(i)).join('')}</div>
+        <div style="text-align:center;margin-top:30px;"><button class="btn btn-secondary">Load more</button></div>` : ''}
+    </div>
+  </div>`
+};
+
+pages.detail = {
+  title:'Event Detail', states:['logged-in','logged-out','pending','waitlist','joined','full','own-event'],
+  render:(s)=>{
+    const gate = s==='logged-out';
+    const isOwner = s==='own-event';
+    let cta;
+    if(gate) cta = `<button class="btn btn-primary btn-block">Sign up to join</button>`;
+    else if(isOwner) cta = `<button class="btn btn-primary btn-block">Manage Event</button>
+        <button class="btn btn-secondary btn-block" style="margin-top:8px;">Edit Event</button>`;
+    else if(s==='pending') cta = `<button class="btn btn-secondary btn-block" disabled>Pending Approval</button>`;
+    else if(s==='waitlist') cta = `<button class="btn btn-secondary btn-block">Join Waitlist</button>`;
+    else if(s==='joined') cta = `<button class="btn btn-secondary btn-block">You're In ✓</button>`;
+    else if(s==='full') cta = `<button class="btn btn-primary btn-block" disabled>Event Full</button>`;
+    else cta = `<button class="btn btn-primary btn-block">Join Event</button>`;
+    return `<div class="app-shell">${topnav(!gate)}
+    <div class="cover" style="height:220px;background:${grad(2)};margin:0;"></div>
+    <div class="section-pad" style="max-width:920px;margin:0 auto;display:flex;gap:36px;align-items:flex-start;flex-wrap:wrap;">
+      <div style="flex:2;min-width:280px;">
+        <span class="chip active" style="cursor:default;">Sports</span>
+        <h1 style="font-size:26px;margin:14px 0 10px;">Saturday Morning 5K Group Run</h1>
+        <div class="row-flex" style="margin-bottom:20px;">
+          <div class="avatar sm">MC</div>
+          <div style="font-size:13px;"><b>${isOwner?'You':'Maria Chen'}</b> · <span style="color:var(--text-muted)">42 events hosted</span></div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:20px;font-size:13.5px;">
+          <div>📅 Saturday, August 15 · 9:00 – 10:30 AM</div>
+          <div>📍 Riverside Park, North Entrance</div>
+        </div>
+        <div class="map-ph">Map preview</div>
+        <h3 style="margin-top:26px;">About this event</h3>
+        <p style="color:var(--text-muted);line-height:1.6;font-size:13.5px;">All paces welcome. We run out-and-back along the river trail, regroup halfway, and grab coffee after. Bring water and good shoes — this route has a few gentle hills.</p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin:16px 0;">
+          <span class="chip" style="cursor:default;">Running</span><span class="chip" style="cursor:default;">Beginner-friendly</span><span class="chip" style="cursor:default;">Outdoors</span>
+        </div>
+        <h3>Reviews</h3>
+        <div style="margin-bottom:6px;">★★★★★ <span style="color:var(--text-muted);font-size:12.5px;">4.8 · 26 reviews</span></div>
+        <div class="card" style="padding:14px;margin-top:10px;">
+          <div class="row-flex" style="margin-bottom:6px;"><div class="avatar sm">DK</div><b style="font-size:13px;">Devon K.</b><span style="color:var(--text-faint);font-size:11px;">2 weeks ago</span></div>
+          <div style="font-size:13px;color:var(--text-muted);">Friendly group, great route, always starts on time.</div>
+        </div>
+      </div>
+      <div style="flex:1;min-width:240px;position:sticky;top:80px;">
+        <div class="card" style="padding:20px;">
+          <div class="capacity-row" style="margin-bottom:14px;">
+            <div class="capacity-bar"><div style="width:${s==='full'?100:70}%"></div></div>
+            <span class="capacity-txt">${s==='full'?'20/20':'14/20'}</span>
+          </div>
+          ${cta}
+          ${isOwner ? `<button class="btn btn-ghost btn-block" style="margin-top:8px;">View Participants (14)</button>` : ''}
+          <button class="btn btn-ghost btn-block" style="margin-top:8px;">🔗 Copy shareable link</button>
+        </div>
+      </div>
+    </div></div>`;
+  }
+};
+
+pages.create = {
+  title:'Create / Edit Event', states:['create','edit','error'],
+  render:(s)=>`<div class="app-shell">${topnav(true)}<div class="section-pad" style="max-width:640px;margin:0 auto;">
+    <h2 class="pg-title">${s==='edit'?'Edit Event':'Create a New Event'}</h2>
+    <p class="pg-sub">${s==='edit'?'Update the details below.':'Fill in the details — you can save as a draft anytime.'}</p>
+    <div class="field"><label>Event title</label><input type="text" value="${s!=='create'?'Saturday Morning 5K Group Run':''}" placeholder="e.g. Drummer needed for weekend gig"></div>
+    <div class="field"><label>Description</label><textarea placeholder="What's this event about?">${s!=='create'?'All paces welcome, we run along the river trail…':''}</textarea>
+      ${s==='error'?'<div class="err">Description must be at least 20 characters.</div>':''}
+    </div>
+    <div class="field"><label>Category</label><select><option>Sports</option><option>Music</option><option>Books</option></select></div>
+    <div class="field"><label>Tags</label><div style="display:flex;gap:8px;flex-wrap:wrap;padding:10px;border:1.5px solid var(--border-strong);border-radius:8px;">
+      <span class="chip active" style="cursor:default;">Running ✕</span><span class="chip active" style="cursor:default;">Outdoors ✕</span>
+      <input type="text" placeholder="Add a tag…" style="border:none;flex:1;min-width:100px;padding:2px;">
+    </div></div>
+    <div class="field">
+      <label>Date &amp; time</label>
+      <div style="display:flex;gap:10px;">
+        <div style="flex:1.3;position:relative;">
+          <input type="date" value="${s!=='create'?'2026-08-15':''}" style="padding-right:36px;">
+          <span style="position:absolute;right:12px;top:50%;transform:translateY(-50%);pointer-events:none;color:var(--text-faint);">📅</span>
+        </div>
+        <div style="flex:1;position:relative;">
+          <input type="time" value="${s!=='create'?'09:00':''}" style="padding-right:36px;">
+          <span style="position:absolute;right:12px;top:50%;transform:translateY(-50%);pointer-events:none;color:var(--text-faint);">🕐</span>
+        </div>
+      </div>
+      <div class="hint">Participants see this in their own local time zone</div>
+    </div>
+    <div style="display:flex;gap:14px;">
+      <div class="field" style="flex:1;"><label>Duration</label><select><option>1 hour</option><option selected>1.5 hours</option><option>2 hours</option><option>Custom…</option></select></div>
+      <div class="field" style="flex:1;"><label>Capacity</label><input type="number" value="20"></div>
+    </div>
+    <div class="field"><label>Location</label><input type="text" value="Riverside Park, North Entrance" placeholder="Search address…"><div class="map-ph" style="margin-top:10px;">Map preview</div></div>
+    <div class="field" style="display:flex;align-items:center;justify-content:space-between;">
+      <div><label style="margin:0;">Auto-approve enrollments</label><div class="hint">Off = you'll manually approve each request</div></div>
+      <div class="toggle on"></div>
+    </div>
+    <details style="margin-bottom:20px;"><summary style="cursor:pointer;font-weight:700;font-size:12.5px;">Reminder timing settings</summary>
+      <div class="field" style="margin-top:12px;"><label>Send reminder</label><select><option>24 hours before</option><option>1 hour before</option></select></div>
+    </details>
+    <div style="display:flex;gap:10px;">
+      <button class="btn btn-secondary">Save as Draft</button>
+      <button class="btn btn-primary">Publish</button>
+      ${s==='edit'?'<button class="btn btn-destructive" style="margin-left:auto;">Cancel Event</button>':''}
+    </div>
+    ${s==='edit'?`<div class="card" style="margin-top:24px;padding:16px;border-color:#f4c7c7;background:#fef8f8;">
+      <b style="font-size:13px;">Cancel this event?</b>
+      <p style="font-size:12.5px;color:var(--text-muted);margin:6px 0 12px;">This notifies all 14 enrolled participants immediately. This can't be undone.</p>
+      <div style="display:flex;gap:8px;"><button class="btn btn-destructive btn-sm">Yes, cancel event</button><button class="btn btn-ghost btn-sm">Never mind</button></div>
+    </div>`:''}
+  </div></div>`
+};
+
+pages.enrollments = {
+  title:'My Enrollments', states:['upcoming','past','pending','waitlisted-empty'],
+  render:(s)=>{
+    const tabMap={upcoming:0,past:1,pending:2,'waitlisted-empty':3};
+    const active=tabMap[s];
+    const tabs=['Upcoming','Past','Pending','Waitlisted'];
+    let body;
+    if(s==='waitlisted-empty') body = emptyState('◌','No pending requests','You have not requested to join anything yet.','Browse events');
+    else if(s==='pending') body = `<div class="grid-events">${[0,1].map(i=>`<div style="position:relative;">${eventCard(i,{title:'Pottery Studio Open Session'})}<span class="badge badge-pending" style="position:absolute;top:12px;right:12px;">Pending</span></div>`).join('')}</div>`;
+    else body = `<div class="grid-events">${[0,1,2].map(i=>`<div style="position:relative;">${eventCard(i)}
+      <span class="badge badge-${s==='past'?'completed':'confirmed'}" style="position:absolute;top:12px;right:12px;">${s==='past'?'Completed':'Confirmed'}</span>
+      ${s==='upcoming'?'<button class="btn btn-ghost btn-sm" style="margin-top:8px;color:#b91c1c;">Cancel enrollment</button>':''}
+      </div>`).join('')}</div>`;
+    return `<div class="app-shell">${topnav(true)}<div class="section-pad">
+      <h2 class="pg-title">My Enrollments</h2>
+      <div class="tabs">${tabs.map((t,i)=>`<div class="tab ${i===active?'active':''}">${t}</div>`).join('')}</div>
+      ${body}
+    </div></div>`;
+  }
+};
+
+pages.dashboard = {
+  title:'Organizer Dashboard', states:['populated','empty'],
+  render:(s)=>`<div class="app-shell">${topnav(true)}<div class="section-pad">
+    <h2 class="pg-title">Your Dashboard</h2>
+    <p class="pg-sub">Manage the events you're organizing.</p>
+    ${s==='empty' ? emptyState('◌','Create your first event','Once you publish an event, you\'ll see enrollments and stats here.','Create your first event') : `
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:30px;">
+      <div class="stat-card"><div class="num">18</div><div class="lbl">Total events hosted</div></div>
+      <div class="stat-card"><div class="num">312</div><div class="lbl">Total enrollments</div></div>
+      <div class="stat-card"><div class="num">4</div><div class="lbl">Upcoming this month</div></div>
+    </div>
+    <table class="table">
+      <tr><th>Event</th><th>Date</th><th>Status</th><th>Enrolled</th><th></th></tr>
+      ${[['5K Group Run','Aug 15','badge-live','14/20'],['Drummer Wanted','Aug 22','badge-live','1/1'],['Sci-Fi Book Club','Aug 5','badge-completed','12/15'],['Hackathon Team Formation','—','badge-draft','0/8']]
+        .map(r=>`<tr><td><b>${r[0]}</b></td><td>${r[1]}</td><td><span class="badge ${r[2]}">${r[2]==='badge-live'?'Live':r[2]==='badge-completed'?'Completed':'Draft'}</span></td><td>${r[3]}</td>
+        <td style="text-align:right;"><button class="btn btn-ghost btn-sm">Edit</button><button class="btn btn-ghost btn-sm">Participants</button>${r[2]==='badge-draft'?'<button class="btn btn-secondary btn-sm">Publish</button>':''}</td></tr>`).join('')}
+    </table>`}
+  </div></div>`
+};
+
+pages.participants = {
+  title:'Event Participants Management', states:['populated','empty'],
+  render:(s)=>`<div class="app-shell">${topnav(true)}<div class="section-pad">
+    <h2 class="pg-title">Participants</h2>
+    <p class="pg-sub">Saturday Morning 5K Group Run · Aug 15</p>
+    ${s==='empty' ? emptyState('◌','No one has joined yet','Share your event link to get your first participant.') : `
+    <table class="table">
+      <tr><th>Participant</th><th>Joined</th><th>Status</th><th></th></tr>
+      ${[['Devon K.','Aug 2','badge-confirmed','Confirmed'],['Priya S.','Aug 3','badge-pending','Pending'],['Alex M.','Aug 3','badge-pending','Pending'],['Jordan T.','Aug 1','badge-confirmed','Confirmed']]
+      .map(r=>`<tr><td><div class="row-flex"><div class="avatar sm">${r[0][0]}</div>${r[0]}</div></td><td>${r[1]}</td><td><span class="badge ${r[2]}">${r[3]}</span></td>
+      <td style="text-align:right;">${r[2]==='badge-pending'?'<button class="btn btn-secondary btn-sm">Approve</button><button class="btn btn-ghost btn-sm">Reject</button>':''}</td></tr>`).join('')}
+    </table>`}
+  </div></div>`
+};
+
+pages.profile = {
+  title:'User Profile', states:['view','edit'],
+  render:(s)=>`<div class="app-shell">${topnav(true)}<div class="section-pad" style="max-width:760px;margin:0 auto;">
+    <div class="card" style="padding:24px;display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap;">
+      <div style="position:relative;"><div class="avatar lg">JT</div>${s==='edit'?'<div style="position:absolute;bottom:0;right:0;width:26px;height:26px;border-radius:50%;background:#18181b;color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;">✎</div>':''}</div>
+      <div style="flex:1;min-width:200px;">
+        ${s==='edit' ? `
+          <input type="text" value="Jamie Torres" style="margin-bottom:8px;font-weight:700;">
+          <textarea style="margin-bottom:8px;">Runner, amateur drummer, always down for a book club.</textarea>
+          <input type="text" value="Austin, TX" style="margin-bottom:8px;">
+        ` : `
+          <h2 style="margin:0 0 4px;">Jamie Torres</h2>
+          <p style="color:var(--text-muted);margin:0 0 8px;">Runner, amateur drummer, always down for a book club.</p>
+          <p style="font-size:12.5px;color:var(--text-faint);">📍 Austin, TX</p>
+        `}
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">
+          <span class="chip active" style="cursor:default;">Running</span><span class="chip active" style="cursor:default;">Music</span><span class="chip active" style="cursor:default;">Books</span>
+        </div>
+      </div>
+      <button class="btn ${s==='edit'?'btn-primary':'btn-secondary'}">${s==='edit'?'Save changes':'Edit Profile'}</button>
+    </div>
+    <div class="tabs" style="margin-top:26px;"><div class="tab active">Events Organized</div><div class="tab">Events Attending</div></div>
+    <div class="grid-events">${[0,1,2].map(i=>eventCard(i)).join('')}</div>
+  </div></div>`
+};
+
+pages.review = {
+  title:'Post-Event Review Prompt', states:['rating','confirmation'],
+  render:(s)=>`<div class="app-shell">${topnav(true)}<div class="auth-wrap"><div class="auth-card" style="width:420px;">
+    ${s==='confirmation' ? emptyState('✓','Thanks for the feedback','Your review helps other people decide what to join.') : `
+    <div style="text-align:center;">
+      <div class="cover" style="height:70px;border-radius:14px;background:${grad(0)};margin-bottom:16px;"></div>
+      <h1 style="font-size:19px;">How was Saturday Morning 5K?</h1>
+      <div class="sub">Your review is shared with future participants.</div>
+      <div style="margin:18px 0;">
+        <span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star">★</span>
+      </div>
+      <textarea placeholder="Optional — tell us more…" style="text-align:left;"></textarea>
+      <button class="btn btn-primary btn-block" style="margin-top:14px;">Submit review</button>
+    </div>`}
+  </div></div></div>`
+};
+
+pages.notfound = {
+  title:'404 Not Found', states:null,
+  render:()=>`<div class="app-shell">${topnav(true)}<div class="auth-wrap">
+    ${emptyState('◌','This page wandered off','The event or page you\'re looking for doesn\'t exist anymore.','Back to Browse')}
+  </div></div>`
+};
+
+pages.settings = {
+  title:'Account Settings', states:['populated','delete-confirm'],
+  render:(s)=>`<div class="app-shell">${topnav(true)}<div class="section-pad" style="max-width:640px;margin:0 auto;">
+    <h2 class="pg-title">Account Settings</h2>
+    <p class="pg-sub">Manage your login, notifications, and account.</p>
+
+    <div class="card" style="padding:22px;margin-bottom:20px;">
+      <h3 style="margin:0 0 16px;font-size:14.5px;">Change password</h3>
+      <div class="field"><label>Current password</label><input type="password" placeholder="••••••••"></div>
+      <div class="field"><label>New password</label><input type="password" placeholder="8+ characters"></div>
+      <div class="field" style="margin-bottom:0;"><label>Confirm new password</label><input type="password" placeholder="Re-enter new password"></div>
+      <button class="btn btn-primary" style="margin-top:16px;">Update password</button>
+    </div>
+
+    <div class="card" style="padding:22px;margin-bottom:20px;">
+      <h3 style="margin:0 0 4px;font-size:14.5px;">Notification preferences</h3>
+      <p class="hint" style="margin:0 0 16px;">Choose what you get emailed about.</p>
+      ${[['New enrollment requests','Someone asks to join an event you organize','on'],
+         ['Enrollment approved','Your request to join an event is approved','on'],
+         ['Event reminders','24 hours before an event you\'re attending','on'],
+         ['Event updates &amp; cancellations','Changes to time, location, or cancellation','on'],
+         ['Product news','Occasional updates about new features','off']]
+        .map(r=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:11px 0;border-top:1px solid var(--border);">
+          <div><div style="font-weight:600;font-size:13px;">${r[0]}</div><div class="hint" style="margin-top:2px;">${r[1]}</div></div>
+          <div class="toggle ${r[2]==='on'?'on':''}"></div>
+        </div>`).join('')}
+    </div>
+
+    <div class="card" style="padding:22px;border-color:#f4c7c7;background:#fef8f8;">
+      <h3 style="margin:0 0 6px;font-size:14.5px;">Delete account</h3>
+      <p class="hint" style="margin:0 0 14px;">Permanently deletes your profile, enrollments, and organized events. This can't be undone.</p>
+      ${s==='delete-confirm' ? `
+        <div style="background:#fff;border:1px solid #f4c7c7;border-radius:10px;padding:14px;">
+          <p style="font-size:12.5px;margin:0 0 10px;">Type <b>delete</b> to confirm — you're currently organizing 3 upcoming events.</p>
+          <input type="text" placeholder="Type 'delete'" style="margin-bottom:10px;">
+          <div style="display:flex;gap:8px;"><button class="btn btn-destructive btn-sm">Permanently delete account</button><button class="btn btn-ghost btn-sm">Cancel</button></div>
+        </div>
+      ` : `<button class="btn btn-destructive">Delete account</button>`}
+    </div>
+  </div></div>`
+};
+
+pages.legal = {
+  title:'Legal Page Template (Terms / Privacy)', states:['terms','privacy'],
+  render:(s)=>{
+    const isTerms = s!=='privacy';
+    return `<div class="app-shell">${topnav(true)}<div class="section-pad" style="max-width:720px;margin:0 auto;">
+    <div class="annot" style="margin-bottom:6px;">Reusable template — swap title, updated date, and section content for each legal doc.</div>
+    <h2 class="pg-title">${isTerms?'Terms of Service':'Privacy Policy'}</h2>
+    <p class="pg-sub">Last updated August 1, 2026</p>
+    <div class="card" style="padding:0;">
+      <div style="display:flex;border-bottom:1px solid var(--border);">
+        <div style="flex:1;padding:14px 18px;font-weight:700;font-size:13px;cursor:pointer;${isTerms?'background:var(--surface-2);':''}">Terms of Service</div>
+        <div style="flex:1;padding:14px 18px;font-weight:700;font-size:13px;cursor:pointer;color:var(--text-muted);${!isTerms?'background:var(--surface-2);color:var(--text);':''}">Privacy Policy</div>
+      </div>
+      <div style="padding:28px 32px;">
+        ${[1,2,3,4].map(n=>`
+          <h3 style="font-size:14.5px;margin:${n===1?'0':'22px'} 0 8px;">${n}. ${isTerms ? ['Using the platform','Organizing events','Account &amp; conduct','Liability'][n-1] : ['Information we collect','How we use it','Sharing &amp; third parties','Your choices'][n-1]}</h3>
+          <p style="font-size:13px;color:var(--text-muted);line-height:1.7;margin:0;">Placeholder body copy for this section — replace with real legal language reviewed by counsel. Each numbered section should stay short enough to scan, with a plain-language summary line if the underlying clause is dense.</p>
+        `).join('')}
+      </div>
+    </div>
+  </div></div>`;
+  }
+};
+
+/* ===== language switcher / mobile menu (visual affordance only, no locale logic) ===== */
+function toggleLangMenu(e,id){
+  e.stopPropagation();
+  document.querySelectorAll('.lang-switch').forEach(el=>{ if(el.id!==id) el.classList.remove('open'); });
+  document.getElementById(id).classList.toggle('open');
+}
+function selectLang(e,code){
+  e.stopPropagation();
+  const switchEl = e.currentTarget.closest('.lang-switch');
+  switchEl.querySelectorAll('.lang-option').forEach(o=>o.classList.remove('selected'));
+  e.currentTarget.classList.add('selected');
+  switchEl.querySelector('.lang-code').textContent = code;
+  switchEl.classList.remove('open');
+  // NOTE: display-only. No translation or locale logic wired up — out of scope for this phase.
+}
+function toggleMobileMenu(e){
+  e.stopPropagation();
+  document.getElementById('mobileMenu').classList.toggle('open');
+}
+document.addEventListener('click',()=>{
+  document.querySelectorAll('.lang-switch.open').forEach(el=>el.classList.remove('open'));
+});
+
+/* ================= NAV / RENDER LOGIC ================= */
+let currentPage='system', currentState=null, isMobile=false;
+
+function buildStateSeg(states){
+  stateSeg.innerHTML='';
+  if(!states){ stateSeg.style.display='none'; return; }
+  stateSeg.style.display='flex';
+  states.forEach((s,i)=>{
+    const b=document.createElement('button');
+    b.textContent=s.replace(/-/g,' ');
+    if(i===0) b.classList.add('active');
+    b.onclick=()=>{ currentState=s; [...stateSeg.children].forEach(c=>c.classList.remove('active')); b.classList.add('active'); doRender(); };
+    stateSeg.appendChild(b);
+  });
+  currentState=states[0];
+}
+
+function doRender(){
+  const p=pages[currentPage];
+  frame.innerHTML = p.render(currentState);
+}
+
+document.querySelectorAll('.nav-item').forEach(el=>{
+  el.onclick=()=>{
+    document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+    el.classList.add('active');
+    currentPage=el.dataset.p;
+    const p=pages[currentPage];
+    pageTitle.textContent=p.title;
+    buildStateSeg(p.states);
+    doRender();
+  };
+});
+document.querySelector('.nav-item[data-p="system"]').classList.add('active');
+buildStateSeg(null);
+doRender();
+
+document.getElementById('btnDesktop').onclick=function(){
+  isMobile=false; frameWrap.classList.remove('mobile');
+  this.classList.add('active'); document.getElementById('btnMobile').classList.remove('active');
+};
+document.getElementById('btnMobile').onclick=function(){
+  isMobile=true; frameWrap.classList.add('mobile');
+  this.classList.add('active'); document.getElementById('btnDesktop').classList.remove('active');
+};
+</script>
+</body>
+</html>
