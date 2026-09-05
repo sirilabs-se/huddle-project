@@ -15,6 +15,7 @@
 	</a>
 	{#if data.session}
 		<div class="flex items-center gap-3.5 text-sm">
+			<a href={resolve('/events/new')} class="btn btn-primary btn-sm">+ New Event</a>
 			<span class="text-[var(--color-text-muted)]">{data.session.user.email}</span>
 			<form method="POST" action="/logout">
 				<button type="submit" class="btn btn-ghost btn-sm">Log out</button>

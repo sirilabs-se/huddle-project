@@ -31,13 +31,12 @@ This plan takes the P0 feature list from the original PRD and breaks it into thr
 | Profile | Name + optional bio. No avatar upload yet. |
 | Event Creation | Single form (not a wizard): title, description, category (dropdown, **read from a `categories` table**, 5 seeded rows), date/time, location (plain text), capacity. |
 | Categories | Seeded in DB, but the UI reads from the `categories` table rather than a hardcoded list — no admin UI to manage them yet, but changing the taxonomy is a data edit, not a code deploy. |
-| Event Browsing | Flat list/grid, newest first. No search, no filters. |
-| Event Detail Page | Title, description, date/time, location, capacity/enrolled count, Join button. |
+| Event Browsing | Flat list/grid, newest first. No search, no filters. **Login-gated** — logged-out visitors bounce to `/login`; MVP-1's "Public Event Page (no login)" is what removes this gate, not a schema/RLS change (public reads are already permitted at the RLS level). |
+| Event Detail Page | Title, description, date/time, location, capacity/enrolled count, Join button. **Login-gated**, same reasoning as Event Browsing above. |
 | Enrollment | Join = auto-approved only. No manual approval, no waitlist. |
-| My Enrollments | Simple flat list of joined events. No tabs, no status badges. |
-| **Authorization (RLS)** | **Define alongside the schema, not as cleanup:** users can only edit/delete their own events; users can't enroll themselves twice in the same event; capacity can't be exceeded (enforce at the DB level, not just in the UI); users can't read/write another user's profile or event data outside what's meant to be public. |
+| **Authorization (RLS)** | **Define alongside the schema, not as cleanup:** users can only edit/delete their own events; users can't enroll themselves twice in the same event; organizers can't enroll in their own event; capacity can't be exceeded (enforce at the DB level, not just in the UI); users can't read/write another user's profile or event data outside what's meant to be public. |
 | **Mobile usability** | Not a responsive polish pass — just confirm the 3 core screens (browse, detail, join) are usable on a phone. If it's unusable on mobile, treat it as a bug, not a later task. |
-| **Basic instrumentation** | Log signup, event created, event viewed, join clicked, join succeeded, enrollment completed, repeat join. No analytics platform needed — a simple events table is enough. This is what turns MVP-1 planning into evidence instead of opinion. |
+| **Basic instrumentation** | Log `event_created`, `event_viewed`, `join_clicked`, `join_succeeded`. `enrollment_completed` is not a separate log point in MVP-0 — auto-approve-only means there's no completion moment distinct from the join succeeding (this becomes a real distinction once MVP-2's manual-approval option exists). `repeat join` is a derived query over the log (does this user have an earlier `join_succeeded` row?), not a fifth write-time event. `signup` instrumentation is a known small gap in the already-shipped auth slice, to be patched separately. No analytics platform needed — a simple events table is enough. This is what turns MVP-1 planning into evidence instead of opinion. |
 
 **Explicitly cut from MVP-0** (all deferred to MVP-1+): organizer dashboard, edit/cancel events, search/filters, waitlist, manual approval, notifications/confirmation email, image uploads, public no-login pages, categories admin UI, true responsive polish.
 
@@ -51,6 +50,7 @@ This plan takes the P0 feature list from the original PRD and breaks it into thr
 
 | Feature | Notes |
 |---|---|
+| My Enrollments | Simple flat list of joined events. No tabs, no status badges. Moved here from MVP-0 — it's a filtered `events`⋈`enrollments` query with no new correctness/security decisions, and doesn't gate proving the core loop. |
 | Organizer Dashboard (basic) | List of my events + who's enrolled. No analytics yet. |
 | Edit / Cancel Event | Organizers can fix mistakes and cancel without emailing you. |
 | Category Filter + Keyword Search | Minimum needed for browsing to not feel broken with >20 events. |
@@ -117,3 +117,4 @@ This compresses the original 6-week single-phase MVP into two 2-week shippable i
 - Confirmation email: kept in MVP-1 but reframed as conditional on instrumentation data, not a fixed requirement — may slide to MVP-2.
 - MVP-0 definition of done: added one non-developer tester alongside friends, short of requiring 5-10 strangers (that bar stays at MVP-1, where it already existed).
 - Niche/wedge decision given an explicit Week 1 deadline instead of an open-ended "before testing begins."
+- **(v3, during Events slice planning)** Event Browsing and Event Detail marked login-gated for MVP-0 (removing the gate is MVP-1's "Public Event Page" work, not a new RLS change). My Enrollments moved from MVP-0 to MVP-1. Basic instrumentation scope narrowed to 4 concrete log points (`event_created`, `event_viewed`, `join_clicked`, `join_succeeded`), with `enrollment_completed`/`repeat join` reframed as derived concepts rather than separate writes, and `signup` instrumentation flagged as an outstanding gap in the shipped auth slice. Authorization row also now explicitly calls out organizer self-enrollment prevention.
