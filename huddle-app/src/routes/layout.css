@@ -1,2 +1,174 @@
 @import 'tailwindcss';
 @plugin '@tailwindcss/typography';
+
+/* Tokens ported from design/ux-mockup/event-platform-mockup_tool4.html's :root */
+@theme {
+	--color-bg: #f2f2f0;
+	--color-surface: #ffffff;
+	--color-surface-2: #fafaf9;
+	--color-text: #18181b;
+	--color-text-muted: #71717a;
+	--color-text-faint: #a1a1aa;
+	--color-border: #e4e4e7;
+	--color-border-strong: #d4d4d8;
+	--color-g1: #3f3f46;
+	--color-g2: #a1a1aa;
+	--color-g3: #d4d4d8;
+
+	--radius-sm: 8px;
+	--radius-md: 14px;
+	--radius-lg: 20px;
+	--radius-full: 999px;
+
+	--shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.06);
+	--shadow-md: 0 4px 16px rgba(0, 0, 0, 0.08);
+	--shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.12);
+
+	--font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+@layer base {
+	html,
+	body {
+		background: var(--color-surface-2);
+		color: var(--color-text);
+		font-family: var(--font-sans);
+	}
+}
+
+/* Shared component classes ported from the mockup's design system */
+@layer components {
+	.topnav {
+		height: 64px;
+		background: var(--color-surface);
+		border-bottom: 1px solid var(--color-border);
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		padding: 0 28px;
+		position: sticky;
+		top: 0;
+		z-index: 10;
+	}
+	.mark {
+		width: 30px;
+		height: 30px;
+		border-radius: 9px;
+		background: linear-gradient(135deg, var(--color-g1), var(--color-g3));
+		flex-shrink: 0;
+	}
+
+	.btn {
+		font-family: inherit;
+		font-weight: 700;
+		font-size: 13.5px;
+		padding: 10px 18px;
+		border-radius: var(--radius-sm);
+		border: none;
+		cursor: pointer;
+		display: inline-flex;
+		align-items: center;
+		gap: 6px;
+		transition: 0.15s;
+	}
+	.btn-primary {
+		background: var(--color-text);
+		color: #fff;
+	}
+	.btn-primary:hover {
+		background: #000;
+		box-shadow: var(--shadow-sm);
+	}
+	.btn-ghost {
+		background: transparent;
+		color: var(--color-text-muted);
+	}
+	.btn-ghost:hover {
+		background: var(--color-surface-2);
+		color: var(--color-text);
+	}
+	.btn-sm {
+		padding: 6px 12px;
+		font-size: 12px;
+	}
+	.btn-block {
+		width: 100%;
+		justify-content: center;
+	}
+
+	.field {
+		margin-bottom: 18px;
+	}
+	.field label {
+		display: block;
+		font-size: 12.5px;
+		font-weight: 700;
+		margin-bottom: 6px;
+		color: var(--color-text);
+	}
+	.field .hint {
+		font-size: 11.5px;
+		color: var(--color-text-muted);
+		margin-top: 5px;
+	}
+	.field .err {
+		font-size: 11.5px;
+		color: #dc2626;
+		margin-top: 5px;
+		font-weight: 600;
+	}
+	.field input {
+		width: 100%;
+		padding: 11px 13px;
+		border: 1.5px solid var(--color-border-strong);
+		border-radius: var(--radius-sm);
+		font-size: 14px;
+		font-family: inherit;
+		background: var(--color-surface);
+		color: var(--color-text);
+	}
+	.field input:focus {
+		outline: none;
+		border-color: #4b4b52;
+		box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.08);
+	}
+
+	/* Not part of the mockup's field-level .err (mockup errors are always
+	   attributed to one field) — this app deliberately returns one generic
+	   auth error rather than a field-specific one, so it needs its own
+	   top-of-form banner using the same red as .err. */
+	.form-error {
+		font-size: 12.5px;
+		font-weight: 600;
+		color: #dc2626;
+		background: #fef2f2;
+		border-radius: var(--radius-sm);
+		padding: 10px 13px;
+		margin-bottom: 18px;
+	}
+
+	.auth-wrap {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		min-height: calc(100vh - 64px);
+		padding: 40px 20px;
+	}
+	.auth-card {
+		width: 380px;
+		max-width: 100%;
+	}
+	.auth-card h1 {
+		font-size: 24px;
+		margin: 0 0 6px;
+	}
+	.auth-card .sub {
+		color: var(--color-text-muted);
+		font-size: 13.5px;
+		margin-bottom: 26px;
+	}
+
+	.section-pad {
+		padding: 32px 40px;
+	}
+}
