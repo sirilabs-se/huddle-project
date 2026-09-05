@@ -10,7 +10,7 @@
 		<p class="sub">Log in to see what's happening.</p>
 
 		{#if form?.error}
-			<p class="form-error">{form.error}</p>
+			<p class="form-error" role="alert">{form.error}</p>
 		{/if}
 
 		<form method="POST">
